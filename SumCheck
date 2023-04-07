@@ -52,7 +52,7 @@ h = p
 while ans == 'y' and k < v-1:  
   q = input("Ingrese el valor el que desea evaluar la variable: ") 
   h = h.subs(variables[k],q)
-  print(h)
+  #print(h)
   hbool = booleanos(v-1-k)
   H = 0
   for x in hbool:
