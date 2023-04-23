@@ -8,61 +8,60 @@ def booleanos(n):
   valores_enteros = [[int(b) for b in valores] for valores in valores_booleanos]
   return valores_enteros 
 
-def evalbooleana(polinomio):
-    variables = polinomio.gens#Obtener las variables del polinomio
-    variables_evaluacion = variables[1:]# Obtener las variables a evaluar
-    polinomios_evaluacion = []# Crear una lista vacía para almacenar los polinomios resultantes
-    valores_booleanos=booleanos(len(variables_evaluacion))
+def evalbooleana(polinomio,F):
+    variables = polinomio.gens #Obtener las variables del polinomio
+    variables_evaluacion = variables[1:] # Obtener las variables a evaluar
+    polinomios_evaluacion = [] # Crear una lista vacía para almacenar los polinomios resultantes
+    valores_booleanos=booleanos(len(variables_evaluacion)) #Crear el hipercubo booleano que se va a evaluar
     for valores in valores_booleanos:
         diccionario_valores = dict(zip(variables_evaluacion, valores))# Crear un diccionario con los valores de las variables
-        polinomio_evaluado = polinomio.subs(diccionario_valores)# Evaluar el polinomio en el diccionario de valores
+        polinomio_evaluado = polinomio.subs(diccionario_valores)# Evaluar el polinomio en el diccionario de valores sobre el campo F
         polinomios_evaluacion.append(polinomio_evaluado)# Agregar el polinomio resultante a la lista de polinomios
-    # Sumar todos los polinomios resultantes
-    polinomio_resultante = sum(polinomios_evaluacion)
-    # Devolver el polinomio resultante
-    return polinomio_resultante
-# Pedir al usuario que ingrese el número de variables
-v = int(input("Ingrese el número de variables: "))
-#r = int(input("Elija el campo en el que quiere trabajar: "))
-# Definir variables simbólicas
-variables = symbols(' '.join([f'x{i}' for i in range(1, v+1)]))
-# Pedir al usuario que ingrese el polinomio
-polinomio = input("Ingrese el polinomio: ")
-# Convertir polinomio a objeto SymPy
-expr = parse_expr(polinomio)
-# Definir polinomio
-p = Poly(expr, variables)
-#print(p)
-# Construir los valores booleanos
-valores_enteros = booleanos(v)
-#print(valores_enteros)
-# Evaluar polinomio en el punto
+    polinomio_resultante = sum(polinomios_evaluacion)# Sumar todos los polinomios resultantes
+    polinomio_resultante = Poly(polinomio_resultante, domain = F) #Cambiar al campo elegido al polinomio
+    return polinomio_resultante # Devolver el polinomio resultante
+#Algoritmo    
+v = int(input("Ingrese el número de variables: "))# Pedir al usuario que ingrese el número de variables
+r = int(input("Elija el campo en el que quiere trabajar: ")) #Pedir al usuario que elija el campo en el que se trabajar
+variables = symbols(' '.join([f'x{i}' for i in range(1, v+1)]))# Definir variables simbólicas
+polinomio = input("Ingrese el polinomio: ")# Pedir al usuario que ingrese el polinomio
+expr = parse_expr(polinomio)# Convertir polinomio a objeto SymPy
+F=GF(r) #Definir el campo elegido por el usuario
+p = Poly(expr, variables, domain = F)# Definir polinomio en el campo elegido
+valores_enteros = booleanos(v) # Construir el hipercubo booleano para la primera evaluación
+# Evaluar polinomio en el hipercubo y sumar los valores
 H = 0 
 for x in valores_enteros:
   H = H + p.eval(x)
-
-print('H =', H)  # Imprime el resultado de evaluar el polinomio en el punto
-
-g = evalbooleana(p)
-print('g =',g)
-
+H = H % r #Convertir al campo el valor H
+print('H =', H)  # Imprime el resultado de evaluar el polinomio en el hipercubo booleano
+g = evalbooleana(p,F)# Se construye el primer polinomio para que pruebe el verificador
+print('g =',g)#Se entrega el primer polinomio al verificador
 ans = input("¿El valor es correcto? (y/n)")
 k = 0
 h = p
 while ans == 'y' and k < v-1:  
-  q = input("Ingrese el valor el que desea evaluar la variable: ") 
-  h = h.subs(variables[k],q)
-  #print(h)
-  hbool = booleanos(v-1-k)
+  q = input("Ingrese el valor el que desea evaluar la variable: ")#Se pide el valor en el que se evaluará la variable k 
+  h = h.subs(variables[k],q, domain = F) #Se evalúa en k
+  hbool = booleanos(v-1-k)#Se construye el hipercubo para generar el siguiente valor de prueba
   H = 0
   for x in hbool:
     H = H + h.eval(x)
-  print('H =', H)
-  g = evalbooleana(h)
-  print('g =',g)
+  H = H % r #Convertir al campo el valor H
+  print('H =', H)#Se entrega el valor de prueba
+  g = evalbooleana(h,F)#Se construye el polinomio de prueba de una variable
+  print('g =',g)#Se entrega el polinomio que será evaluado
   k = k+1
   ans = input("¿El valor es correcto? (y/n)")
 if ans == 'y':
-  print('Todo en orden')
+  q = input("Ingrese el valor el que desea evaluar la variable: ")#Se pide el valor para el último paso
+  H = h(q)
+  H = H % r #Convertir al campo el valor H
+  print(H)
+  ans = input("¿El valor es correcto? (y/n)")
+  if ans == 'y':
+    print('Todo en orden')
+  else:
+    print('Hay un error')
 else:
   print('Hay un error')
